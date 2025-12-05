@@ -39,7 +39,7 @@ def main():
     print(f"Agent initialized with model: {agent.model_name}\n")
     
     # Instana application ID
-    app_id = "8rwDuom6TGSGB-YhFfn4VA"
+    app_id = "HFoOdED4Qlu_0MPRQBbOuw"
     
     # Example 1: Direct query with application ID
     print("=" * 50)

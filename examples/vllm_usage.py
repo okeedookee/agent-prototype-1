@@ -43,15 +43,7 @@ def main():
     result = agent.run("What is the capital of France?")
     print(f"Response: {result['response']}")
     
-    # Example 2: Using tools
-    print("\n\nExample 2: Using calculator tool")
-    print("-" * 50)
-    result = agent.run("What is 25 * 47?")
-    print(f"Response: {result['response']}")
-    if result['tool_calls']:
-        print(f"Tools used: {[tc['name'] for tc in result['tool_calls']]}")
-    
-    # Example 3: Conversation with memory
+    # Example 2: Conversation with memory
     print("\n\nExample 3: Conversation with memory")
     print("-" * 50)
     conversation_history = []

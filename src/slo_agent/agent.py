@@ -10,7 +10,7 @@ from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
-from .tools import search_tool, calculator, fetch_application
+from .tools import fetch_application
 from .llm_providers import create_llm
 from .config import LLMConfig, create_llm_config
 
@@ -41,7 +41,7 @@ class LangGraphAgent:
         Args:
             config: LLMConfig object or dict with configuration. If None, loads from environment variables.
         """
-        self.tools = [search_tool, calculator, fetch_application]
+        self.tools = [fetch_application]
         
         # Create or use provided configuration
         if config is not None:

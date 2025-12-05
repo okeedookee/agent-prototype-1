@@ -33,20 +33,9 @@ def main():
     print(f"User: Hello! What can you help me with?")
     print(f"Agent: {result['response']}\n")
     
-    # Example 2: Using the calculator tool
+    # Example 2: Using the fetch_application tool
     print("=" * 50)
-    print("Example 2: Using Calculator Tool")
-    print("=" * 50)
-    
-    result = agent.run("What is 25 * 47 + 123?")
-    print(f"User: What is 25 * 47 + 123?")
-    print(f"Agent: {result['response']}")
-    if result['tool_calls']:
-        print(f"Tools used: {[tc['name'] for tc in result['tool_calls']]}\n")
-    
-    # Example 3: Using the fetch_application tool
-    print("=" * 50)
-    print("Example 3: Using Fetch Application Tool")
+    print("Example 2: Using Fetch Application Tool")
     print("=" * 50)
     
     result = agent.run("Fetch details for the robot-shop application")
