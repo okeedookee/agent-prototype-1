@@ -63,12 +63,10 @@ def get_instana_application(application_id: str, mcp_server_path: Optional[str] 
             bufsize=1
         )
         
-        def send_and_receive(request, request_name=""):
+        def send_and_receive(request):
             """Send a request and read the response"""
             if process.stdin:
                 request_json = json.dumps(request)
-                print(f"\n[MCP Request - {request_name}]")
-                print(request_json)
                 process.stdin.write(request_json + '\n')
                 process.stdin.flush()
             
@@ -76,10 +74,7 @@ def get_instana_application(application_id: str, mcp_server_path: Optional[str] 
             if process.stdout:
                 response_line = process.stdout.readline()
                 if response_line:
-                    response = json.loads(response_line.strip())
-                    print(f"\n[MCP Response - {request_name}]")
-                    print(json.dumps(response, indent=2))
-                    return response
+                    return json.loads(response_line.strip())
             return None
         
         # Step 1: Initialize MCP connection
@@ -94,8 +89,7 @@ def get_instana_application(application_id: str, mcp_server_path: Optional[str] 
             }
         }
         
-        print(f"\n[MCP Initializing connection to {server_path} {' '.join(server_args_list)}]")
-        init_response = send_and_receive(init_request, "initialize")
+        init_response = send_and_receive(init_request)
         
         if not init_response:
             process.terminate()
@@ -111,10 +105,7 @@ def get_instana_application(application_id: str, mcp_server_path: Optional[str] 
             "method": "notifications/initialized"
         }
         if process.stdin:
-            notif_json = json.dumps(initialized_notif)
-            print(f"\n[MCP Notification - initialized]")
-            print(notif_json)
-            process.stdin.write(notif_json + '\n')
+            process.stdin.write(json.dumps(initialized_notif) + '\n')
             process.stdin.flush()
         
         # Step 3: Call the tool
@@ -130,7 +121,7 @@ def get_instana_application(application_id: str, mcp_server_path: Optional[str] 
             }
         }
         
-        tool_response = send_and_receive(tool_request, "tools/call")
+        tool_response = send_and_receive(tool_request)
         
         # Cleanup
         if process:
@@ -161,7 +152,6 @@ def get_instana_application(application_id: str, mcp_server_path: Optional[str] 
                 try:
                     # Try to parse as JSON if possible
                     app_data = json.loads(text_content)
-                    print(f"[MCP Response received successfully]")
                     return {
                         "id": application_id,
                         "data": app_data,
@@ -197,6 +187,67 @@ def get_instana_application(application_id: str, mcp_server_path: Optional[str] 
             "message": str(e),
             "application_id": application_id
         }
+
+
+@tool
+def summarize_application(application_id: str) -> str:
+    """
+    Fetch and summarize application configuration from Instana by application ID.
+    
+    Args:
+        application_id: The Instana application ID to summarize
+        
+    Returns:
+        A formatted summary of the application configuration
+    """
+    # Fetch application data from Instana
+    app_data = get_instana_application(application_id)
+    
+    # Handle errors
+    if "error" in app_data:
+        return f"Error: {app_data['message']}"
+    
+    # Extract data
+    data = app_data.get("data", {})
+    
+    # Build summary
+    summary_parts = []
+    summary_parts.append(f"Application ID: {application_id}")
+    
+    if isinstance(data, dict):
+        # Add label if available
+        if "label" in data:
+            summary_parts.append(f"Name: {data['label']}")
+        
+        # Add boundary scope
+        if "boundaryScope" in data:
+            summary_parts.append(f"Boundary Scope: {data['boundaryScope']}")
+        
+        # Add services count
+        if "services" in data:
+            services = data["services"]
+            if isinstance(services, list):
+                summary_parts.append(f"Services: {len(services)} configured")
+                # List service names if available
+                service_names = [s.get("name", "Unknown") for s in services if isinstance(s, dict)]
+                if service_names:
+                    summary_parts.append(f"Service Names: {', '.join(service_names)}")
+        
+        # Add tags if available
+        if "tags" in data:
+            tags = data["tags"]
+            if isinstance(tags, list) and tags:
+                summary_parts.append(f"Tags: {', '.join(str(t) for t in tags)}")
+        
+        # Add any other relevant fields
+        for key in ["createdAt", "updatedAt", "description"]:
+            if key in data:
+                summary_parts.append(f"{key.replace('_', ' ').title()}: {data[key]}")
+    else:
+        # If data is not a dict, just include it as text
+        summary_parts.append(f"Data: {data}")
+    
+    return "\n".join(summary_parts)
 
 
 @tool
